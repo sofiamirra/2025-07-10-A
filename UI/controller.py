@@ -11,15 +11,82 @@ class Controller:
         self._model = model
 
     def handleCreaGrafo(self, e):
-        pass
+        category = self._categoryValue
+        date1 = self._view._dp1.value
+        date2 = self._view._dp2.value
+        self._model.buildGraph(category, date1, date2)
+        nNodi, nArchi = self._model.getGraphDetails()
+
+        self._view.txt_result.controls.clear()
+        self._view.txt_result.controls.append(ft.Text("Date Selezionate: "))
+        self._view.txt_result.controls.append(ft.Text(f"Start Date: {self._view._dp1.value.date()}"))
+        self._view.txt_result.controls.append(ft.Text(f"End Date: {self._view._dp2.value.date()}"))
+        self._view.txt_result.controls.append(ft.Text("Grafo Creato"))
+        self._view.txt_result.controls.append(ft.Text(f"Numero nodi: {nNodi}"))
+        self._view.txt_result.controls.append(ft.Text(f"Numero archi: {nArchi}"))
+        self._view.update_page()
+        self._fillDDProdotti()
 
     def handleBestProdotti(self, e):
-        pass
+        bestProdotti = self._model.getBestSellers()
+        self._view.txt_result.controls.clear()
+        self._view.txt_result.controls.append(ft.Text("Prodotti maggiormente profittevoli: "))
+        for p in bestProdotti:
+            self._view.txt_result.controls.append(ft.Text(f"{p[0]} - score = {p[1]}"))
+        self._view.update_page()
 
     def handleCercaCammino(self, e):
-        pass
+        if self._view._txtInLun.value == "":
+            self._view.txt_result.controls.clear()
+            self._view.txt_result.controls.append(ft.Text("Attenzione, inserire un valore numerico!"))
+            self._view.update_page()
+            return
 
+        try:
+            lun = int(self._view._txtInLun.value)
+        except ValueError:
+            self._view.txt_result.controls.clear()
+            self._view.txt_result.controls.append(ft.Text("Attenzione, inserire un valore numerico!"))
+            self._view.update_page()
+            return
 
+        path, score = self._model.getBestPath(lun, self._prodStartValue, self._prodEndValue)
+
+        if len(path) == 0:
+            self._view.txt_result.controls.clear()
+            self._view.txt_result.controls.append(ft.Text(f"Non ho trovato un cammino tra {self._prodStartValue} e {self._prodEndValue}"))
+            self._view.update_page()
+            return
+
+        self._view.txt_result.controls.clear()
+        self._view.txt_result.controls.append(ft.Text(f"Cammino migliore tra {self._prodStartValue} e {self._prodEndValue}"))
+        for p in path:
+            self._view.txt_result.controls.append(ft.Text(p))
+        self._view.txt_result.controls.append(ft.Text(f"Score: {score}"))
+        self._view.update_page()
+
+    def _fillDDCategories(self):
+        categories = self._model.getCategories()
+        categoriesDDOptions = list(map(lambda x:ft.dropdown.Option(data=x, key=x.category_name, on_click=self._choiceCategory), categories))
+        self._view._ddcategory.options = categoriesDDOptions
+        self._view.update_page()
+
+    def _choiceCategory(self, e):
+        self._categoryValue = e.control.data
+
+    def _fillDDProdotti(self):
+        prodotti = self._model.getAllNodes()
+        nodesDDOptionStart = list(map(lambda x:ft.dropdown.Option(data=x, key=x.product_name, on_click=self._choiceProdStart), prodotti))
+        nodesDDOptionEnd = list( map(lambda x: ft.dropdown.Option(data=x, key=x.product_name, on_click=self._choiceProdEnd), prodotti))
+        self._view._ddProdStart.options = nodesDDOptionStart
+        self._view._ddProdEnd.options = nodesDDOptionEnd
+        self._view.update_page()
+
+    def _choiceProdStart(self, e):
+        self._prodStartValue = e.control.data
+
+    def _choiceProdEnd(self, e):
+        self._prodEndValue = e.control.data
 
     def setDates(self):
         first, last = self._model.getDateRange()

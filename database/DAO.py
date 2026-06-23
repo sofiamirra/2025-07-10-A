@@ -1,4 +1,7 @@
 from database.DB_connect import DBConnect
+from model.arco import Arco
+from model.category import Category
+from model.product import Product
 
 
 class DAO():
@@ -9,7 +12,6 @@ class DAO():
     def getDateRange():
 
         conn = DBConnect.get_connection()
-
         results = []
 
         cursor = conn.cursor(dictionary=True)
@@ -26,3 +28,77 @@ class DAO():
         cursor.close()
         conn.close()
         return first, last
+
+    @staticmethod
+    def getCategorie():
+
+        conn = DBConnect.get_connection()
+        results = []
+
+        cursor = conn.cursor(dictionary=True)
+        query =  """SELECT * FROM
+        categories """
+
+        cursor.execute(query)
+
+        for row in cursor:
+            results.append(Category(**row))
+
+        cursor.close()
+        conn.close()
+        return results
+
+    @staticmethod
+    def getProductsByCategory(category):
+
+        conn = DBConnect.get_connection()
+        results = []
+
+        cursor = conn.cursor(dictionary=True)
+        query =  """SELECT * 
+            FROM products p
+            WHERE p.category_id = %s"""
+
+        cursor.execute(query, (category.category_id,))
+
+        for row in cursor:
+            results.append(Product(**row))
+
+        cursor.close()
+        conn.close()
+        return results
+
+    @staticmethod
+    def getAllEdges(category, d1, d2, idMapP):
+
+        conn = DBConnect.get_connection()
+        results = []
+
+        cursor = conn.cursor(dictionary=True)
+        query = """SELECT t1.product_id as id1, t2.product_id as id2, t1.n as nid1, t2.n as nid2, t1.n + t2.n as peso
+                FROM (SELECT p.product_id, count(*) as n
+                FROM products p, order_items oi, orders o
+                WHERE oi.order_id = o.order_id AND oi.product_id = p.product_id 
+                AND o.order_date BETWEEN %s AND %s
+                AND p.category_id = %s
+                GROUP BY p.product_id 
+                ) t1, 
+                (SELECT p.product_id, count(*) as n
+                FROM products p, order_items oi, orders o
+                WHERE oi.order_id = o.order_id AND oi.product_id = p.product_id 
+                AND o.order_date BETWEEN %s AND %s
+                AND p.category_id = %s
+                GROUP BY p.product_id 
+                ) t2
+                WHERE t1.product_id <> t2.product_id
+                AND t1.n >= t2.n
+                ORDER BY peso desc"""
+
+        cursor.execute(query, (d1, d2, category.category_id, d1, d2, category.category_id))
+
+        for row in cursor:
+            results.append(Arco(idMapP[row["id1"]], idMapP[row["id2"]], row["peso"]))
+
+        cursor.close()
+        conn.close()
+        return results
