@@ -14,6 +14,7 @@ class Model:
         return DAO.getDateRange()
 
     def getCategories(self):
+        """Per passare il metodo al Controller"""
         return DAO.getCategorie()
 
     def getAllNodes(self):
@@ -45,28 +46,34 @@ class Model:
         return listBestSellers[0:5]
 
     def getBestPath(self, t, v0, vf):
+        # Lunghezza definita, nodo di partenza, nodo di arrivo
         self._bestPath = []
         self._bestScore = 0
-        parziale = [v0]
-        self._ricorsione(parziale, t, v0, vf)
+        parziale = [v0] # preparo il cammino dal nodo di partenza
+        self._ricorsione(parziale, t, v0, vf) # passo tutti i vincoli
         return self._bestPath, self._bestScore
 
     def _ricorsione(self, parziale, t, v0, vf):
         # CONDIZIONE OTTIMALITÀ E TERMINAZIONE
-        if len(parziale) == t:
+        if len(parziale) == t: # riferita al numero di archi
+            # Se sono lungo 't', controllo: sono arrivato a destinazione?
+            # E il mio punteggio ha battuto il record storico?
             if parziale[-1] == vf and self._getScore(parziale) > self._bestScore:
                 self._bestPath = copy.deepcopy(parziale)
                 self._bestScore = self._getScore(parziale)
             return
 
+        # Uso successors() per rispettare il verso degli archi!
         for n in self._graph.successors(parziale[-1]):
-            if n not in parziale:
+            if n not in parziale: # Il nodo non deve essere già nel cammino
                 parziale.append(n)
-                self._ricorsione(parziale, t, v0, vf)
+                self._ricorsione(parziale, t, v0, vf) # continuo l'esplorazione
                 parziale.pop()
 
     def _getScore(self, parziale):
         score = 0
+        # Ciclo da 0 fino al penultimo elemento
         for i in range(0, len(parziale)-1):
+            # Sommo il peso dell'arco tra il nodo i e il nodo successivo i+1
             score += self._graph[parziale[i]][parziale[i+1]]["weight"]
         return score

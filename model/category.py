@@ -1,3 +1,4 @@
+"""Creiamo l'oggetto Category per mantenere l'accesso sia al nome che all'id"""
 from dataclasses import dataclass
 
 @dataclass

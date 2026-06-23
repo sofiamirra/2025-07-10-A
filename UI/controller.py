@@ -36,28 +36,33 @@ class Controller:
         self._view.update_page()
 
     def handleCercaCammino(self, e):
+        # Controllo sull'input utente (lunghezza fissa)
         if self._view._txtInLun.value == "":
             self._view.txt_result.controls.clear()
             self._view.txt_result.controls.append(ft.Text("Attenzione, inserire un valore numerico!"))
             self._view.update_page()
             return
 
+        # Controllo sul tipo di dato
         try:
             lun = int(self._view._txtInLun.value)
         except ValueError:
+            # Se l'utente ha scritto "ciao" o "5.5", Python lancia un ValueError
             self._view.txt_result.controls.clear()
             self._view.txt_result.controls.append(ft.Text("Attenzione, inserire un valore numerico!"))
             self._view.update_page()
             return
 
+        # chiamata al Model
         path, score = self._model.getBestPath(lun, self._prodStartValue, self._prodEndValue)
 
-        if len(path) == 0:
+        if len(path) == 0: # gestione risultato vuoto
             self._view.txt_result.controls.clear()
             self._view.txt_result.controls.append(ft.Text(f"Non ho trovato un cammino tra {self._prodStartValue} e {self._prodEndValue}"))
             self._view.update_page()
             return
 
+        # stampa del successo
         self._view.txt_result.controls.clear()
         self._view.txt_result.controls.append(ft.Text(f"Cammino migliore tra {self._prodStartValue} e {self._prodEndValue}"))
         for p in path:
@@ -66,18 +71,20 @@ class Controller:
         self._view.update_page()
 
     def _fillDDCategories(self):
-        categories = self._model.getCategories()
+        categories = self._model.getCategories() # Recupero la lista di oggetti dal Model
+        # Trasformo ogni oggetto 'x' in una Option di Flet
         categoriesDDOptions = list(map(lambda x:ft.dropdown.Option(data=x, key=x.category_name, on_click=self._choiceCategory), categories))
-        self._view._ddcategory.options = categoriesDDOptions
+        self._view._ddcategory.options = categoriesDDOptions # Assegno la lista al Dropdown nella View
         self._view.update_page()
 
     def _choiceCategory(self, e):
+        # Metodo che gestisce il click dell'utente
         self._categoryValue = e.control.data
 
     def _fillDDProdotti(self):
         prodotti = self._model.getAllNodes()
         nodesDDOptionStart = list(map(lambda x:ft.dropdown.Option(data=x, key=x.product_name, on_click=self._choiceProdStart), prodotti))
-        nodesDDOptionEnd = list( map(lambda x: ft.dropdown.Option(data=x, key=x.product_name, on_click=self._choiceProdEnd), prodotti))
+        nodesDDOptionEnd = list(map(lambda x: ft.dropdown.Option(data=x, key=x.product_name, on_click=self._choiceProdEnd), prodotti))
         self._view._ddProdStart.options = nodesDDOptionStart
         self._view._ddProdEnd.options = nodesDDOptionEnd
         self._view.update_page()

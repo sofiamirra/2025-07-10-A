@@ -35,6 +35,7 @@ class DAO():
         conn = DBConnect.get_connection()
         results = []
 
+        """Query che seleziona l'intero oggetto Category"""
         cursor = conn.cursor(dictionary=True)
         query =  """SELECT * FROM
         categories """
@@ -42,7 +43,7 @@ class DAO():
         cursor.execute(query)
 
         for row in cursor:
-            results.append(Category(**row))
+            results.append(Category(**row)) # lista di oggetti Category
 
         cursor.close()
         conn.close()
@@ -70,7 +71,7 @@ class DAO():
 
     @staticmethod
     def getAllEdges(category, d1, d2, idMapP):
-
+        """La costruzione degli archi viene delegata interamente al DataBase"""
         conn = DBConnect.get_connection()
         results = []
 
@@ -90,11 +91,11 @@ class DAO():
                 AND p.category_id = %s
                 GROUP BY p.product_id 
                 ) t2
-                WHERE t1.product_id <> t2.product_id
+                WHERE t1.product_id <> t2.product_id 
                 AND t1.n >= t2.n
                 ORDER BY peso desc"""
-
-        cursor.execute(query, (d1, d2, category.category_id, d1, d2, category.category_id))
+        # RECALL: <> non collega un nodo a sè stesso, >= gestisce la direzione dell'arco (dal maggiore al minore)
+        cursor.execute(query, (d1, d2, category.category_id, d1, d2, category.category_id)) # passo tutti e 6 i parametri
 
         for row in cursor:
             results.append(Arco(idMapP[row["id1"]], idMapP[row["id2"]], row["peso"]))
